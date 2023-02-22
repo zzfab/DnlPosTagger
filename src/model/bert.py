@@ -35,6 +35,15 @@ class BERTPoSTagger(Classifier):
         self.dropout = nn.Dropout(self.config['dropout'])
 
     def forward(self, x):
+        input_ids = x['input_ids']
+        attention_mask = x['attention_mask']
+
+        # Get the output of the BERT model
         with torch.no_grad():
-            x = self.model(**x).pooler_output
-        return self.fc(x)
+            outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
+            pooled_output = outputs.pooler_output
+
+        # Apply dropout and pass the output through the linear layer
+        logits = self.fc(self.dropout(pooled_output))
+
+        return logits

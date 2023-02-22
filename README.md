@@ -26,15 +26,10 @@ where text_file is the path to the unlabelled text.
 
 
 ## Testing Strategy and Confidence
-We tested our model using cross-validation and achieved an accuracy of 93% on the test data. 
-
-## Trade-offs
-We made a trade-off between model complexity and accuracy. 
-While more complex models such as neural networks may achieve higher accuracy, they also require more data and computational resources to train. 
-We chose the HMM model because it strikes a good balance between accuracy and simplicity.
+ToDo: 
 
 ## Time Spent
 ToDo:
 
 ## Evaluation Criteria
-We will evaluate the quality, clarity, and maintainability of the source code, as well as the efficiency and effectiveness of the chosen algorithm with respect to batching and normalization. 
+ToDo: 

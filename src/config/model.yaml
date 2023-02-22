@@ -1,5 +1,5 @@
-num_classes: 66
-output_dim: 1
+num_classes: 18
+output_dim: 18
 dropout: 0.1
 
 optim:

@@ -67,11 +67,8 @@ class Classifier(pl.LightningModule,ABC):
             self.log(f"{mode}/{k}", v, on_epoch=on_epoch, logger=enable_logger)
 
     def training_step(self, batch, batch_idx):
-        data, label = batch
-
-        text = data
-        tags = label
-        logits = self(text)
+        data, tags = batch
+        logits = self(data)
         logits = logits.view(-1, logits.shape[-1])
         tags = tags
         loss = self.ce_criterion(logits, tags)
@@ -145,7 +142,7 @@ class Classifier(pl.LightningModule,ABC):
         ]
         return [opt], schedulers
 
-    def text_collate_fn(self,batch: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor]:
+    def collate_fn(self, batch: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         prepare text input data and labels to send into the BERT network
         :param batch: list of tuples containing data and label, [(data1, label1), ... (data2, label2)]
@@ -157,32 +154,44 @@ class Classifier(pl.LightningModule,ABC):
             texts.append(text)
             labels.append(lab)
         text = texts[0]
-        text.data["input_ids"] = torch.cat([t.data["input_ids"] for t in texts])
-        # text.data["token_type_ids"] = torch.cat([t.data["token_type_ids"] for t in texts]) # for BertTokenizer, not in use
-        text.data["attention_mask"] = torch.cat([t.data["attention_mask"] for t in texts])
-        return text, torch.flatten(torch.tensor(labels))
+        #ToDo: find a way to pad the texts with the same length of the longest text
+        #print(text)
+        # pad texts to the same length
+        max_len = max(len(sample[0]) for sample in text)
+        padded_texts = [sample[0] + [0] * (max_len - len(sample[0])) for sample in text]
+
+        # stack texts and labels into tensors
+        texts = torch.tensor(padded_texts, dtype=torch.long)
+        labels = torch.tensor([sample[1] for sample in labels], dtype=torch.long)
+
+        return texts, labels
 
     def train_dataloader(self):
-        train_lists = read_conllu(os.path.join(wdir,"data/UD_English-GUM/en_gum-ud-train.conllu"))
+        train_lists = read_conllu(os.path.join(wdir,"data/UD_English-GUM/en_gum-ud-train.conllu"))[:5]
+        #logger.debug(f"train_lists: {len(train_lists)}")
         sentences = []
         tags = []
         for sentence in train_lists:
             s, t = to_sentence(sentence)
             sentences.append(s)
             tags.append(t)
-
-        train_dataloader = DataLoader(GMU(sentences,tags),batch_size=4,collate_fn=self.text_collate_fn)
+        #logger.debug(f"sentences: {len(sentences)}")
+        #logger.debug(f"tags: {len(tags)}")
+        train_dataloader = DataLoader(GMU(sentences,tags),
+                                      batch_size=64,
+                                      #collate_fn=self.collate_fn
+        )
         return train_dataloader
 
     def validation_dataloader(self):
-        val_lists = read_conllu(os.path.join(wdir,"data/UD_English-GUM/en_gum-ud-dev.conllu"))
+        val_lists = read_conllu(os.path.join(wdir,"data/UD_English-GUM/en_gum-ud-dev.conllu"))[:5]
         sentences = []
         tags = []
         for sentence in val_lists:
             s, t = to_sentence(sentence)
             sentences.append(s)
             tags.append(t)
-        val_dataloader = DataLoader(GMU(sentences,tags),batch_size=4,collate_fn=self.text_collate_fn)
+        val_dataloader = DataLoader(GMU(sentences,tags),batch_size=4)
         return val_dataloader
 
 
