@@ -7,6 +7,12 @@ optim:
   weight_decay: 1e-8
   amsgrad: False
 
+train_step:
+  name: "loss/train"
+
+val_step:
+  name: "loss/val"
+
 text:
   model_type: "BERTClassifier" # BERTClassifier, FastTextClassifier
   pretrained_model: "bert-base-uncased"

@@ -2,6 +2,7 @@ import os
 from typing import Any, List, Optional, Sequence, Tuple, Union
 import torch
 import torch.nn as nn
+from torch.nn import CrossEntropyLoss
 from torch.nn.functional import cross_entropy
 from abc import ABC, abstractmethod
 from typing import Optional
@@ -12,6 +13,7 @@ from torchmetrics import Accuracy
 from torchmetrics import F1Score as F1
 from torchmetrics import MetricCollection, Precision, Recall
 import sys
+import numpy as np
 
 wdir = os.path.dirname(os.getcwd())
 sys.path.append(wdir)
@@ -19,16 +21,18 @@ sys.path.append(wdir)
 from src.util import logger
 from src.util.helper import *
 from db_client.datasets.gmu_dataset import GMU
+
 logger = logger.get_logger(__name__)
 
-class Classifier(pl.LightningModule,ABC):
+
+class BertClassifier(pl.LightningModule, ABC):
     def __init__(
             self,
             config: dict,
             model: Optional[nn.Module] = None,
             metric_collection: Optional[MetricCollection] = None,
     ):
-        super(Classifier, self).__init__()
+        super(BertClassifier, self).__init__()
         self.config = config
         self.model = None or model
         self.metric_collection = metric_collection or MetricCollection(
@@ -69,9 +73,11 @@ class Classifier(pl.LightningModule,ABC):
     def training_step(self, batch, batch_idx):
         data, tags = batch
         logits = self(data)
-        logits = logits.view(-1, logits.shape[-1])
-        tags = tags
-        loss = self.ce_criterion(logits, tags)
+        logger.debug(f"Logits: {logits.shape} | Tags: {tags.shape}")
+        # Make sure logits and tags have the same sequence length
+        logits = logits.view(-1, self.config['output_dim'])
+        tags = tags.view(-1)
+        loss = self.ce_criterion()(logits, tags)
         self.log(
             self.config['train_step']['name'],
             loss,
@@ -91,13 +97,11 @@ class Classifier(pl.LightningModule,ABC):
         return loss
 
     def validation_step(self, batch, batch_idx):
-        data, label = batch
-        text = data
-        tags = label
-        logits = self(text)
+        data, tags = batch
+        logits = self(data)
         logits = logits.view(-1, logits.shape[-1])
-        tags = tags
-        loss = self.ce_criterion(logits, tags)
+        mce = self.ce_criterion()
+        loss = mce(logits, tags)
         self.log(
             self.config['val_step']['name'],
             loss,
@@ -116,8 +120,8 @@ class Classifier(pl.LightningModule,ABC):
         )
         return loss
 
-    def ce_criterion(self, pred, target, weight=None, reduction="mean"):
-        return cross_entropy(pred, target, weight=weight, reduction=reduction)
+    def ce_criterion(self):
+        return CrossEntropyLoss(ignore_index = 0)
 
     def configure_optimizers(self):
         opt = torch.optim.Adam(
@@ -142,29 +146,6 @@ class Classifier(pl.LightningModule,ABC):
         ]
         return [opt], schedulers
 
-    def collate_fn(self, batch: List[Tuple]) -> Tuple[torch.Tensor, torch.Tensor]:
-        """
-        prepare text input data and labels to send into the BERT network
-        :param batch: list of tuples containing data and label, [(data1, label1), ... (data2, label2)]
-        :return: tuple containing stacked tensors for data and label
-        """
-        texts, labels = [], []
-        for item in batch:
-            text, lab = item
-            texts.append(text)
-            labels.append(lab)
-        text = texts[0]
-        #ToDo: find a way to pad the texts with the same length of the longest text
-        #print(text)
-        # pad texts to the same length
-        max_len = max(len(sample[0]) for sample in text)
-        padded_texts = [sample[0] + [0] * (max_len - len(sample[0])) for sample in text]
-
-        # stack texts and labels into tensors
-        texts = torch.tensor(padded_texts, dtype=torch.long)
-        labels = torch.tensor([sample[1] for sample in labels], dtype=torch.long)
-
-        return texts, labels
 
     def train_dataloader(self):
         train_lists = read_conllu(os.path.join(wdir,"data/UD_English-GUM/en_gum-ud-train.conllu"))[:5]
@@ -178,8 +159,7 @@ class Classifier(pl.LightningModule,ABC):
         #logger.debug(f"sentences: {len(sentences)}")
         #logger.debug(f"tags: {len(tags)}")
         train_dataloader = DataLoader(GMU(sentences,tags),
-                                      batch_size=64,
-                                      #collate_fn=self.collate_fn
+                                      batch_size=1
         )
         return train_dataloader
 

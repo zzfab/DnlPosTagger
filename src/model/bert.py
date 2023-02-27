@@ -13,12 +13,11 @@ sys.path.append(wdir)
 print(wdir)
 # Import Custom Modules
 from src.util import logger
-from src.model.classifier import Classifier
+from src.model.bertclassifier import BertClassifier
 
 logger = logger.get_logger(__name__)
 
-
-class BERTPoSTagger(Classifier):
+class BERTPoSTagger(BertClassifier):
     def __init__(
         self,
         config: dict,
@@ -30,19 +29,14 @@ class BERTPoSTagger(Classifier):
         )
         #self.config = self.config, self.model = model, self.metric_collection = metric_collection
         self.model = BertModel.from_pretrained(self.config['text']['pretrained_model'])
-        embedding_dim = self.config['text']['sentence_level']['hidden_size']
-        self.fc = nn.Linear(768, self.config['output_dim'])
+        #embedding_dim = self.config['text']['sentence_level']['hidden_size']
         self.dropout = nn.Dropout(self.config['dropout'])
+        self.fc = nn.Linear(768, self.config['output_dim'])
 
     def forward(self, x):
-        input_ids = x['input_ids']
-        attention_mask = x['attention_mask']
-
         # Get the output of the BERT model
-        with torch.no_grad():
-            outputs = self.model(input_ids=input_ids, attention_mask=attention_mask)
-            pooled_output = outputs.pooler_output
-
+        outputs = self.model(x['input_ids'].squeeze(1), x['attention_mask'])
+        pooled_output = outputs[1]
         # Apply dropout and pass the output through the linear layer
         logits = self.fc(self.dropout(pooled_output))
 
