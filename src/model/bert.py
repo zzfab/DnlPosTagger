@@ -13,7 +13,7 @@ from torch.utils.data import DataLoader
 from src.util.helper import *
 logger = logger.get_logger(__name__)
 import torch
-from transformers import BertForTokenClassification, BertTokenizer, BertConfig,BertTokenizerFast
+from transformers import BertForTokenClassification,  BertConfig,BertTokenizerFast
 
 
 class PosTaggingModel(pl.LightningModule):
@@ -49,26 +49,23 @@ class PosTaggingModel(pl.LightningModule):
         return {"correct": correct, "total": total}
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=5e-5)
+        optimizer = torch.optim.Adam(self.parameters(), lr=2e-5)
         return optimizer
 
-    def validation_dataloader(self):
-        file = os.path.join(wdir, "data/UD_English-GUM/en_gum-ud-dev.conllu")
-        sentences, tags = load_data(file)
+    def validation_dataloader(self,dev_file):
+        sentences, tags = load_data(dev_file)
         dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
         data_loader = DataLoader(dataset, batch_size=self.batch_size, collate_fn=collate_fn)
         return data_loader
 
-    def train_dataloader(self):
-        file = os.path.join(wdir, "data/UD_English-GUM/en_gum-ud-train.conllu")
-        sentences, tags = load_data(file)
+    def train_dataloader(self,train_file):
+        sentences, tags = load_data(train_file)
         dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
         data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
         return data_loader
 
-    def test_dataloader(self):
-        file = os.path.join(wdir, "data/UD_English-GUM/en_gum-ud-test.conllu")
-        sentences, tags = load_data(file)
+    def test_dataloader(self,test_file):
+        sentences, tags = load_data(test_file)
         dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
         data_loader = DataLoader(dataset, batch_size=self.batch_size, collate_fn=collate_fn)
         return data_loader
