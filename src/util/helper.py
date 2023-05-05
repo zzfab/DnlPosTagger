@@ -1,12 +1,12 @@
 import pyconll
 import os
 import sys
-
+import torch
 # Setup Working Directory
 wdir = os.path.dirname(os.getcwd())
 # Add Working Directory to Path
 sys.path.append(wdir)
-import torch
+
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -61,7 +61,7 @@ def collate_fn(batch):
         'labels': labels
     }
 def load_data(file_path):
-    data = read_conllu(file_path)[:10]
+    data = read_conllu(file_path)[:100]
     sentences = []
     tags = []
 

@@ -1,0 +1,2 @@
+ACCELERATOR='cpu'
+EPOCH=3

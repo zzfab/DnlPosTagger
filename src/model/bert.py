@@ -1,4 +1,3 @@
-
 import os
 import pytorch_lightning as pl
 import sys
@@ -13,10 +12,8 @@ from src.util import logger
 from torch.utils.data import DataLoader
 from src.util.helper import *
 logger = logger.get_logger(__name__)
-
 import torch
 from transformers import BertForTokenClassification, BertTokenizer, BertConfig,BertTokenizerFast
-from pytorch_lightning import LightningModule
 
 
 class PosTaggingModel(pl.LightningModule):
@@ -47,8 +44,9 @@ class PosTaggingModel(pl.LightningModule):
         outputs = self(**batch)
         logits = outputs.logits
         preds = torch.argmax(logits, axis=-1)
-        print({"preds": preds, "tags": tags})
-        return {"preds": preds, "tags": tags}
+        correct = torch.sum(preds == tags, dtype=torch.float)
+        total = preds.numel()
+        return {"correct": correct, "total": total}
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=5e-5)
@@ -74,3 +72,12 @@ class PosTaggingModel(pl.LightningModule):
         dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
         data_loader = DataLoader(dataset, batch_size=self.batch_size, collate_fn=collate_fn)
         return data_loader
+    def test_epoch_end(self, outputs):
+        accuracy = self.compute_accuracy(outputs)
+        self.log("test_accuracy", accuracy)
+        return accuracy
+
+    def compute_accuracy(self,outputs):
+        total_correct = sum([output["correct"] for output in outputs])
+        total_predictions = sum([output["total"] for output in outputs])
+        return total_correct / total_predictions

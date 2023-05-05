@@ -18,6 +18,34 @@ tag2id = {
     "X": 16
 }
 
+tag2color = {
+    "ADJ": "background-color: blue; color: white;",
+    "ADP": "background-color: green; color: white;",
+    "ADV": "background-color: red; color: white;",
+    "AUX": "background-color: purple; color: white;",
+    "CCONJ": "background-color: brown; color: white;",
+    "DET": "background-color: darkblue; color: white;",
+    "INTJ": "background-color: magenta; color: white;",
+    "NOUN": "background-color: darkgreen; color: white;",
+    "NUM": "background-color: navy; color: white;",
+    "PART": "background-color: orange; color: white;",
+    "PRON": "background-color: darkorange; color: white;",
+    "PROPN": "background-color: darkred; color: white;",
+    "PUNCT": "background-color: black; color: white;",
+    "SCONJ": "background-color: darkmagenta; color: white;",
+    "SYM": "background-color: darkcyan; color: white;",
+    "VERB": "background-color: darkviolet; color: white;",
+    "X": "background-color: darkgray; color: white;"
+}
+
+def generate_color_legend():
+    html_legend = "<div><h4>Color Legend:</h4>"
+    for tag, style in tag2color.items():
+        html_legend += f'<span style="margin-right: 15px; {style}">{tag}</span>'
+    html_legend += "</div>"
+    return html_legend
+id2tag = {v: k for k, v in tag2id.items()}
+
 def align_tags(tags, offsets_mapping):
     aligned_tags = []
     tag_idx = 0

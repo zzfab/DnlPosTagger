@@ -1,10 +1,29 @@
 # POS Tagger
-this repository contains a POS tagger that can be trained on labeled data and used to generate tags for unlabelled text. The following scripts are provided for this purpose:
-```
-train.py: trains the model on labeled data, with one sentence per line and each token separated by a space.
-eval.py: tests the accuracy of the model on labeled test data, with the same format as the training data.
-generate.py: generates POS tags for unlabelled text, with one sentence per line and each token separated by a space.
-```
+This repository contains a Part-of-Speech (POS) tagger implemented using the BERTForTokenClassification model from the Hugging Face Transformers library.
+
+## Assumptions
+- The input data is in CoNLL-U format.
+- The dataset has 17 distinct POS tags.
+
+## Model Choice Reasoning
+BERT (Bidirectional Encoder Representations from Transformers) is chosen for this task because it has proven to be highly effective in a variety of natural language processing tasks, including POS tagging. The pre-trained model can be fine-tuned to the specific task, which allows it to leverage the knowledge it has already gained during pre-training on a large corpus.
+
+BERTForTokenClassification is a BERT model specifically designed for token-level tasks like POS tagging. It extends the base BERT model by adding a classification layer on top of the hidden states for each token. This makes it suitable for the given task.
+
+## Testing Strategy and Confidence in the Model
+The testing strategy involves splitting the dataset into training, validation, and test sets. The model is trained on the training set and evaluated on the validation set during training to monitor its performance and prevent overfitting. Finally, the model is tested on the test set to obtain its performance on unseen data.
+
+The degree of confidence in the model can be determined by comparing its performance on the validation and test sets. If the model performs well on both sets, it indicates that it generalizes well to unseen data. However, the model's confidence can be further improved by conducting a more thorough evaluation, such as using cross-validation or testing on a diverse set of datasets.
+
+## Trade-offs
+- Using a pre-trained BERT model like bert-base-uncased may not be optimal for certain languages or specific domains. Fine-tuning a domain-specific pre-trained model or training a model from scratch could be beneficial in such cases.
+- This task is easy to solve but time consuming to optimize. Therefore iam using a relative simple approach which could be further improved by optimization techniques
+
+
+## Time Spent on Challenge
+Starting with a Hidden Markov approach in the past ~ 10h.
+Improved solution for this task with a pre-trained Language Model (BERT) ~ 5h.
+
 ## Usage:
 To train the model, run: 
 ``` 
