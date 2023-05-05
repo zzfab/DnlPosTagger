@@ -24,6 +24,19 @@ The degree of confidence in the model can be determined by comparing its perform
 Starting with a Hidden Markov approach in the past ~ 10h.
 Improved solution for this task with a pre-trained Language Model (BERT) ~ 5h.
 
+## Streamlit Web App
+The Streamlit web app provides an interactive interface for data analysis, evaluation, and generation of POS tags. It consists of three main sections:
+
+1. Data Analyzer: Displays various plots and statistics for the training and validation datasets.
+2. Evaluation: Displays plots for training and validation losses for each epoch, as well as evaluation metrics for the test set, such as accuracy and F1-score.
+3. Generator: Allows users to input their own text and generates POS tags for the input text using the trained model.
+
+To launch the Streamlit web app, run:
+``
+cd app/
+streamlit run data_analyzer.py
+``
+
 ## Usage:
 To train the model, run: 
 ``` 
@@ -42,3 +55,5 @@ To generate POS tags for unlabelled text,
 run python generate.py --text_file [text_file]
 ```
 where text_file is the path to the unlabelled text.
+
+

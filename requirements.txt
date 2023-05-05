@@ -1,0 +1,11 @@
+numpy
+sklearn
+pandas
+spacy==3.0.5
+torchtext==0.8
+torch==1.7.1
+datasets==1.6.2
+transformers==4.5.1
+streamlit
+pytorch_lightning
+altair

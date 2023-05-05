@@ -14,9 +14,15 @@ from src.util.helper import *
 logger = logger.get_logger(__name__)
 import torch
 from transformers import BertForTokenClassification,  BertConfig,BertTokenizerFast
-
+import torchmetrics
 class PosTaggingModel(pl.LightningModule):
+    """
+    PyTorch Lightning module for Part-of-Speech tagging using BERTForTokenClassification.
+    """
     def __init__(self, train_file=None, dev_file=None, test_file=None, model_name="bert-base-uncased", batch_size=16, num_labels=17):
+        """
+        Initialize the model, tokenizer, and other configurations.
+        """
         super().__init__()
         self.tokenizer = BertTokenizerFast.from_pretrained(model_name)
         config = BertConfig.from_pretrained(model_name, num_labels=num_labels)
@@ -27,29 +33,45 @@ class PosTaggingModel(pl.LightningModule):
         self.dev_file = dev_file
         self.test_file = test_file
 
+
+        self.train_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_labels)
+        self.valid_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_labels)
+        self.test_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_labels)
+
     def forward(self, input_ids, attention_mask, labels=None, token_type_ids=None):
         return self.model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
 
     def training_step(self, batch, batch_idx):
+        """
+        Perform a single training step.
+        """
         outputs = self(**batch)
         loss = outputs.loss
         self.log('train_loss', loss)
+        self.accuracy(outputs.logits, batch['labels'])  # compute metrics
+        self.log('train_acc_step', self.accuracy)  # log metric object
         return loss
 
     def validation_step(self, batch, batch_idx):
+        """
+         Perform a single validation step.
+         """
         outputs = self(**batch)
         loss = outputs.loss
+        outputs.logits
         self.log('val_loss', loss)
+        self.val_acc[batch_idx](outputs.logits, batch['labels'])
+        self.log('val_acc', self.val_acc[batch_idx])
 
     def test_step(self, batch, batch_idx):
+        """
+         Perform a single test step.
+         """
         input_ids, attention_mask, tags = batch
         outputs = self(**batch)
         logits = outputs.logits
-        preds = torch.argmax(logits, axis=-1)
-
-        total = preds.numel()
-        print(preds)
-        print(total)
+        self.test_acc(outputs.logits, batch['labels'])
+        self.log('test_acc', self.test_acc)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=2e-5)
