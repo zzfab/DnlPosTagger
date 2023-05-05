@@ -7,25 +7,6 @@ wdir = os.path.dirname(os.getcwd())
 # Add Working Directory to Path
 sys.path.append(wdir)
 
-
-def count_parameters(model):
-    return sum(p.numel() for p in model.parameters() if p.requires_grad)
-
-def cut_and_convert_to_id(tokens:str, tokenizer, max_input_length:int):
-    tokens = tokens[:max_input_length-1]
-    tokens = tokenizer.convert_tokens_to_ids(tokens)
-    return tokens
-
-def cut_to_max_length(tokens:str, max_input_length:int):
-    """
-    Cut tokens to max input length
-    :param tokens:
-    :param max_input_length:
-    :return:
-    """
-    tokens = tokens[:max_input_length-1]
-    return tokens
-
 def read_conllu(path):
     """
     Read conllu file
