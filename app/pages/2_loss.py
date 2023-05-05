@@ -2,9 +2,12 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 from pytorch_lightning.loggers import CSVLogger
+import os
+import sys
+wdir = os.path.dirname(os.getcwd())
+sys.path.append(wdir)
 
-
-csv_logger = CSVLogger("lightning_logs", name="pos_tagging")
+csv_logger = CSVLogger(os.path.join(wdir,"src/lightning_logs", name="pos_tagging"))
 log_path = csv_logger.experiment.metrics_file_path
 metrics_df = pd.read_csv(log_path)
 

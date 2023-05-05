@@ -3,10 +3,13 @@ import torch
 import os
 import sys
 from transformers import BertTokenizerFast
+import argparse
+import pytorch_lightning as pl
 wdir = os.path.dirname(os.getcwd())
 sys.path.append(wdir)
 from src.model.bert import PosTaggingModel
 from src.util.tagger import id2tag,tag2color,generate_color_legend
+import settings
 
 tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
 
@@ -26,6 +29,17 @@ def predict(text, model):
             style = tag2color[tag]
             html_output += f'<span style="{style}">{token}</span> '
         return html_output
+
+def main(test_file):
+    model = PosTaggingModel.load_from_checkpoint(os.path.join(wdir,"model/pos_tagging_model.ckpt"),test_file=test_file)
+    print(predict(text, model))
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("text_file", type=str, nargs="?", help="Path to the text file")
+    args = parser.parse_args()
+    main(args.text_file)
+
 
 st.title("POS Tagger")
 

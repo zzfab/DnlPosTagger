@@ -1,6 +1,8 @@
 # POS Tagger
 This repository contains a Part-of-Speech (POS) tagger implemented using the BERTForTokenClassification model from the Hugging Face Transformers library.
 
+Code was written in Python 3.8.16
+Be aware of change `settings.py` if computation is made on cpu/gpu
 ## Assumptions
 - The input data is in CoNLL-U format.
 - The dataset has 17 distinct POS tags.
@@ -19,7 +21,7 @@ The degree of confidence in the model can be determined by comparing its perform
 - BERT models are computationally expensive and may require more resources (e.g., memory and computation time) compared to LSTM or HMM models. If you have limited resources, you may want to consider simpler models like LSTMs or HMMs.
 - Using a pre-trained BERT model like bert-base-uncased may not be optimal for certain languages or specific domains. Fine-tuning a domain-specific pre-trained model or training a model from scratch could be beneficial in such cases.
 - HMMs are more interpretable than BERT or LSTM models, which might be an advantage in some applications where model interpretability is crucial.
-
+- No testing/hyperparametertuning/early stopping or regularization was made because of time
 ## Time Spent on Challenge
 (BERT) approach took around ~ 7h in total.
 

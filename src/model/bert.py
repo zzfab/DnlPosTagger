@@ -9,8 +9,10 @@ print(wdir)
 # Import Custom Modules
 from db_client.datasets.gum_dataset import PosTaggingDataset
 from src.util import logger
+from src.util.tagger import id2tag
 from torch.utils.data import DataLoader
 from src.util.helper import *
+import settings
 logger = logger.get_logger(__name__)
 import torch
 from transformers import BertForTokenClassification,  BertConfig,BertTokenizerFast
@@ -19,7 +21,7 @@ class PosTaggingModel(pl.LightningModule):
     """
     PyTorch Lightning module for Part-of-Speech tagging using BERTForTokenClassification.
     """
-    def __init__(self, train_file=None, dev_file=None, test_file=None, model_name="bert-base-uncased", batch_size=16, num_labels=17):
+    def __init__(self, train_file=None, dev_file=None, test_file=None, model_name="bert-base-uncased", batch_size=settings.BATCH_SIZE, num_labels=17):
         """
         Initialize the model, tokenizer, and other configurations.
         """
@@ -34,7 +36,7 @@ class PosTaggingModel(pl.LightningModule):
         self.dev_file = dev_file
         self.test_file = test_file
 
-        self.test_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_labels)
+        self.test_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_labels+1)
 
     def forward(self, input_ids, attention_mask, labels=None, token_type_ids=None):
         return self.model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
@@ -45,7 +47,7 @@ class PosTaggingModel(pl.LightningModule):
         """
         outputs = self(**batch)
         loss = outputs.loss
-        self.log('train_loss', loss)
+        self.log('train_loss', loss,on_epoch=True, prog_bar=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
@@ -58,20 +60,25 @@ class PosTaggingModel(pl.LightningModule):
 
     def test_step(self, batch, batch_idx):
         """
-         Perform a single test step.
-         """
-        input_ids, attention_mask, tags = batch
-        outputs = self(**batch)
-        preds = torch.argmax(outputs.logits, axis=-1).squeeze().tolist()
-        # Remove [CLS] and [SEP] tokens
-        self.test_acc(preds, [id for id in tags])
-        self.log('test_acc', self.test_acc)
+        Perform a single test step.
+        """
+        input_ids, attention_mask, tags = batch['input_ids'], batch['attention_mask'], batch['labels']
+        outputs = self(input_ids=input_ids, attention_mask=attention_mask, labels=tags)
+        preds = torch.argmax(outputs.logits, axis=-1)
+
+        # Filter out the -100 values from both preds and tags tensors
+        valid_positions = tags != -100
+        filtered_preds = preds[valid_positions]
+        filtered_tags = tags[valid_positions]
+
+        self.test_acc(filtered_preds, filtered_tags)  # Pass filtered preds and tags
+        self.log('test_acc', self.test_acc, prog_bar=True)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=2e-5)
         return optimizer
 
-    def validation_dataloader(self):
+    def val_dataloader(self):
         sentences, tags = load_data(self.dev_file)
         dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
         data_loader = DataLoader(dataset, batch_size=self.batch_size, collate_fn=collate_fn)

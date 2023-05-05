@@ -19,7 +19,7 @@ def main(train_file,dev_file):
     csv_logger = CSVLogger("lightning_logs", name="pos_tagging")
     trainer = pl.Trainer(max_epochs=settings.EPOCH,
                          accelerator=settings.ACCELERATOR,
-                         devices=3,
+                         devices=1,
                          logger=csv_logger)
     trainer.fit(model)
     trainer.save_checkpoint(os.path.join(wdir,"model/pos_tagging_model.ckpt"))

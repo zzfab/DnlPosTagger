@@ -2,6 +2,7 @@ import os
 import sys
 import pytorch_lightning as pl
 import argparse
+from pytorch_lightning.loggers import CSVLogger
 wdir = os.path.dirname(os.getcwd())
 sys.path.append(wdir)
 from src.util import logger
@@ -16,7 +17,10 @@ logger.info('Run Trainer for POS Tagging')
 def main(test_file):
     model = PosTaggingModel.load_from_checkpoint(os.path.join(wdir,"model/pos_tagging_model.ckpt"),test_file=test_file)
     test_dataloader = model.test_dataloader()
-    trainer = pl.Trainer(accelerator=settings.ACCELERATOR)
+    csv_logger = CSVLogger("lightning_logs", name="pos_tagging")
+    trainer = pl.Trainer(accelerator=settings.ACCELERATOR,
+                         devices=1,
+                         logger=csv_logger)
     trainer.test(model,
                  dataloaders=test_dataloader,
                  verbose=False)
