@@ -42,7 +42,7 @@ def collate_fn(batch):
         'labels': labels
     }
 def load_data(file_path):
-    data = read_conllu(file_path)[:100]
+    data = read_conllu(file_path)
     sentences = []
     tags = []
 
