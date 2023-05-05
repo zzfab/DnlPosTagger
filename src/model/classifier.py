@@ -25,14 +25,14 @@ from db_client.datasets.gmu_dataset import GMU
 logger = logger.get_logger(__name__)
 
 
-class BertClassifier(pl.LightningModule, ABC):
+class Classifier(pl.LightningModule, ABC):
     def __init__(
             self,
             config: dict,
             model: Optional[nn.Module] = None,
             metric_collection: Optional[MetricCollection] = None,
     ):
-        super(BertClassifier, self).__init__()
+        super(Classifier, self).__init__()
         self.config = config
         self.model = None or model
         self.metric_collection = metric_collection or MetricCollection(
@@ -72,8 +72,9 @@ class BertClassifier(pl.LightningModule, ABC):
 
     def training_step(self, batch, batch_idx):
         data, tags = batch
-        logits = self(data)
-        logger.debug(f"Logits: {logits.shape} | Tags: {tags.shape}")
+        logits = self(data,torch.tensor([3]))
+        logger.info(f"Logits: {logits.shape} | Tags: {tags.shape}")
+        logger.info(f"Logits: {logits} | Tags: {tags}")
         # Make sure logits and tags have the same sequence length
         logits = logits.view(-1, self.config['output_dim'])
         tags = tags.view(-1)
@@ -173,5 +174,4 @@ class BertClassifier(pl.LightningModule, ABC):
             tags.append(t)
         val_dataloader = DataLoader(GMU(sentences,tags),batch_size=4)
         return val_dataloader
-
 

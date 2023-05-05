@@ -6,6 +6,7 @@ import sys
 wdir = os.path.dirname(os.getcwd())
 # Add Working Directory to Path
 sys.path.append(wdir)
+import torch
 
 def count_parameters(model):
     return sum(p.numel() for p in model.parameters() if p.requires_grad)
@@ -43,10 +44,29 @@ def read_conllu(path):
         tagged_sentences.append(tagged_sentence)
     return tagged_sentences
 
-def to_sentence(tagged_list):
-    sentence = []
+def to_sentence(tagged_sentence):
+    words = [token[0] for token in tagged_sentence]
+    tags = [token[1] for token in tagged_sentence]
+    return words, tags
+
+
+def collate_fn(batch):
+    input_ids = torch.stack([item['input_ids'] for item in batch])
+    attention_mask = torch.stack([item['attention_mask'] for item in batch])
+    labels = torch.stack([item['labels'] for item in batch])
+
+    return {
+        'input_ids': input_ids,
+        'attention_mask': attention_mask,
+        'labels': labels
+    }
+def load_data(file_path):
+    data = read_conllu(file_path)[:10]
+    sentences = []
     tags = []
-    for token, tag in tagged_list:
-        sentence.append(token)
-        tags.append(tag)
-    return sentence, tags
+
+    for sentence in data:
+        s, t = to_sentence(sentence)
+        sentences.append(s)
+        tags.append(t)
+    return sentences, tags

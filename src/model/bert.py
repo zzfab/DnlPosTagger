@@ -1,43 +1,76 @@
-import torch
-import torch.nn as nn
-from typing import Optional
-from torchmetrics import MetricCollection
-import os
-import sys
-from transformers import BertModel
 
+import os
+import pytorch_lightning as pl
+import sys
 # Setup Working Directory
 wdir = os.path.dirname(os.getcwd())
 # Add Working Directory to Path
 sys.path.append(wdir)
 print(wdir)
 # Import Custom Modules
+from db_client.datasets.gmu_dataset import PosTaggingDataset
 from src.util import logger
-from src.model.bertclassifier import BertClassifier
-
+from torch.utils.data import DataLoader
+from src.util.helper import *
 logger = logger.get_logger(__name__)
 
-class BERTPoSTagger(BertClassifier):
-    def __init__(
-        self,
-        config: dict,
-        model: Optional[nn.Module] = None,
-        metric_collection: Optional[MetricCollection] = None,
-    ):
-        super(BERTPoSTagger, self).__init__(
-            config=config, model=model, metric_collection=metric_collection
-        )
-        #self.config = self.config, self.model = model, self.metric_collection = metric_collection
-        self.model = BertModel.from_pretrained(self.config['text']['pretrained_model'])
-        #embedding_dim = self.config['text']['sentence_level']['hidden_size']
-        self.dropout = nn.Dropout(self.config['dropout'])
-        self.fc = nn.Linear(768, self.config['output_dim'])
+import torch
+from transformers import BertForTokenClassification, BertTokenizer, BertConfig,BertTokenizerFast
+from pytorch_lightning import LightningModule
 
-    def forward(self, x):
-        # Get the output of the BERT model
-        outputs = self.model(x['input_ids'].squeeze(1), x['attention_mask'])
-        pooled_output = outputs[1]
-        # Apply dropout and pass the output through the linear layer
-        logits = self.fc(self.dropout(pooled_output))
 
-        return logits
+class PosTaggingModel(pl.LightningModule):
+    def __init__(self, model_name="bert-base-uncased", num_labels=17):
+        super().__init__()
+        self.tokenizer = BertTokenizerFast.from_pretrained(model_name)
+        config = BertConfig.from_pretrained(model_name, num_labels=num_labels)
+        self.model = BertForTokenClassification.from_pretrained(model_name, config=config)
+        self.tokenizer = BertTokenizerFast.from_pretrained("bert-base-uncased")
+        self.batch_size = 4
+
+    def forward(self, input_ids, attention_mask, labels=None, token_type_ids=None):
+        return self.model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
+
+    def training_step(self, batch, batch_idx):
+        outputs = self(**batch)
+        loss = outputs.loss
+        self.log('train_loss', loss)
+        return loss
+
+    def validation_step(self, batch, batch_idx):
+        outputs = self(**batch)
+        loss = outputs.loss
+        self.log('val_loss', loss)
+
+    def test_step(self, batch, batch_idx):
+        input_ids, attention_mask, tags = batch
+        outputs = self(**batch)
+        logits = outputs.logits
+        preds = torch.argmax(logits, axis=-1)
+        print({"preds": preds, "tags": tags})
+        return {"preds": preds, "tags": tags}
+
+    def configure_optimizers(self):
+        optimizer = torch.optim.Adam(self.parameters(), lr=5e-5)
+        return optimizer
+
+    def validation_dataloader(self):
+        file = os.path.join(wdir, "data/UD_English-GUM/en_gum-ud-dev.conllu")
+        sentences, tags = load_data(file)
+        dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
+        data_loader = DataLoader(dataset, batch_size=self.batch_size, collate_fn=collate_fn)
+        return data_loader
+
+    def train_dataloader(self):
+        file = os.path.join(wdir, "data/UD_English-GUM/en_gum-ud-train.conllu")
+        sentences, tags = load_data(file)
+        dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
+        data_loader = DataLoader(dataset, batch_size=self.batch_size, shuffle=True, collate_fn=collate_fn)
+        return data_loader
+
+    def test_dataloader(self):
+        file = os.path.join(wdir, "data/UD_English-GUM/en_gum-ud-test.conllu")
+        sentences, tags = load_data(file)
+        dataset = PosTaggingDataset(sentences, tags, self.tokenizer)
+        data_loader = DataLoader(dataset, batch_size=self.batch_size, collate_fn=collate_fn)
+        return data_loader

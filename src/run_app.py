@@ -1,13 +1,11 @@
 import os
 import sys
 
-import yaml
-from pathlib import Path
+import pytorch_lightning as pl
 wdir = os.path.dirname(os.getcwd())
 sys.path.append(wdir)
 from src.util import logger
-from src.model.bert import BERTPoSTagger
-from src.train import train
+from src.model.bert import PosTaggingModel
 from src.util.helper import *
 logger = logger.setup_applevel_logger(file_name = os.path.join(wdir,'logging/app_debug.log'))
 logger.info('Run Application for POS Tagging')
@@ -31,8 +29,18 @@ def main():
     #train.train_model(args.train_file, args.dev_file, args.model_file, args.hidden_size, args.learning_rate, args.epochs)
     return None
 if __name__ == '__main__':
-    cfg = {}
-    cfg['train'] = yaml.safe_load(Path(os.path.join(wdir, "src/config/train.yaml")).read_text())
-    cfg['model'] = yaml.safe_load(Path(os.path.join(wdir, "src/config/model.yaml")).read_text())
-    model = BERTPoSTagger(config=cfg['model'])
-    train(cfg['train'], model)
+    #cfg = {}
+    #cfg['train'] = yaml.safe_load(Path(os.path.join(wdir, "src/config/train.yaml")).read_text())
+    #cfg['model'] = yaml.safe_load(Path(os.path.join(wdir, "src/config/model.yaml")).read_text())
+    #model = PosTaggingModel()
+    #train(cfg['train'],model)
+
+
+    model = PosTaggingModel()
+
+    trainer = pl.Trainer(max_epochs=1, accelerator="cpu", devices=3)
+    trainer.fit(model)
+    trainer.save_checkpoint("pos_tagging_model.ckpt")
+
+    new_model = PosTaggingModel.load_from_checkpoint("pos_tagging_model.ckpt")
+    trainer.test(model)

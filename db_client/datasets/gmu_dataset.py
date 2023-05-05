@@ -4,40 +4,46 @@ import torch
 from torch.utils.data import Dataset
 from transformers import  BertTokenizer
 import os
+
+
+import string
+alphabet = string.ascii_lowercase
 import sys
 wdir = os.path.dirname(os.getcwd())
 sys.path.append(wdir)
 
 from src.util import logger
+from src.util import tagger
+from src.util.helper import cut_to_max_length,cut_and_convert_to_id
 logger = logger.get_logger(__name__)
 
 
-class GMU(Dataset):
-    def __init__(self, sentences, tags):
+
+class PosTaggingDataset(Dataset):
+    def __init__(self, sentences, tags, tokenizer):
         self.sentences = sentences
         self.tags = tags
-        self.tokenizer = BertTokenizer.from_pretrained("bert-base-uncased")
-        self.mapper = {
-            '<pad>': 0, 'NOUN': 1, 'PUNCT': 2, 'VERB': 3, 'PRON': 4, 'ADP': 5, 'DET': 6, 'PROPN': 7, 'ADJ': 8,
-             'AUX': 9, 'ADV': 10, 'CCONJ': 11, 'PART': 12, 'NUM': 13, 'SCONJ': 14, 'X': 15, 'INTJ': 16, 'SYM': 17
-        }
+        self.tokenizer = tokenizer
 
     def __len__(self):
         return len(self.sentences)
 
     def __getitem__(self, idx):
-        txt = " ".join(self.sentences[idx])
-        logger.debug(f"encoded_text: {txt}")
-        encoded_text = self.tokenizer.encode_plus(
-            txt,
-            add_special_tokens=True,
-            return_tensors="pt",
-            max_length=512,
-            truncation=True,
-            padding="max_length",
-            return_attention_mask=True,
-            return_token_type_ids=False,
-        )
-        encoded_labels = [self.mapper[x] for x in self.tags[idx]]
-        return encoded_text,torch.tensor(encoded_labels)
+        sentence = self.sentences[idx]
+        tag = self.tags[idx]
 
+        # Tokenize the input sentence and tags
+        tokenized_input = self.tokenizer(sentence, is_split_into_words=True, return_offsets_mapping=True,
+                                         padding='max_length', truncation=True)
+        input_ids = tokenized_input['input_ids']
+        attention_mask = tokenized_input['attention_mask']
+        offsets_mapping = tokenized_input['offset_mapping']
+
+        # Map the tags to the tokenized input
+        aligned_tags = tagger.align_tags(tag, offsets_mapping)
+
+        return {
+            'input_ids': torch.tensor(input_ids),
+            'attention_mask': torch.tensor(attention_mask),
+            'labels': torch.tensor(aligned_tags)
+        }
