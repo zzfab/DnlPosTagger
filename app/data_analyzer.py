@@ -1,24 +1,28 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
+import altair as alt
 import os
 import sys
 from collections import defaultdict
-import torch
+
 
 
 wdir = os.path.dirname(os.getcwd())
 sys.path.append(wdir)
 
-
-from src.model.bert import BERTPoSTagger
-from src.train import train
 from src.util.helper import *
 
 # Store the initial value of widgets in session state
 if "visibility" not in st.session_state:
     st.session_state.visibility = "visible"
     st.session_state.disabled = False
+
+st.set_page_config(
+    page_title="Data Analyzer",
+    page_icon="👋",
+)
+st.sidebar.success("Datasets")
+
 
 st.title('DNL Part of Speech Tagger')
 
@@ -30,7 +34,6 @@ option = st.selectbox(
         disabled=st.session_state.disabled)
 
 data = read_conllu(os.path.join(wdir,f"data/UD_English-GUM/en_gum-ud-{option}.conllu"))
-st.write((data[0][0]))
 
 X = []  # store input sequence
 Y = []  # store output sequence
@@ -72,5 +75,15 @@ tag_counts = defaultdict(int)
 for tags in tag_list:
     for tag in tags:
         tag_counts[tag] += 1
-st.json(dict(tag_counts))
+#st.json(dict(tag_counts))
+# Create a dataframe containing the tags and their counts
+tag_counts_df = pd.DataFrame(list(tag_counts.items()), columns=["Tag", "Count"])
+# Create an Altair bar plot with tooltip functionality
+bar = alt.Chart(tag_counts_df).mark_bar().encode(
+    x=alt.X("Tag", title="Tags", sort="-y"),
+    y=alt.Y("Count", title="Counts"),
+    tooltip=[alt.Tooltip("Tag"), alt.Tooltip("Count")]
+).properties(width=600, height=400)
 
+st.subheader("Tag Counts")
+st.write(bar)

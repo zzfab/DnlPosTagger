@@ -42,13 +42,3 @@ To generate POS tags for unlabelled text,
 run python generate.py --text_file [text_file]
 ```
 where text_file is the path to the unlabelled text.
-
-
-## Testing Strategy and Confidence
-ToDo: 
-
-## Time Spent
-ToDo:
-
-## Evaluation Criteria
-ToDo: 

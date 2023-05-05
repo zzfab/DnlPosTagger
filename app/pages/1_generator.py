@@ -28,12 +28,13 @@ def predict(text, model):
         return html_output
 
 st.title("POS Tagger")
+st.sidebar.success("Generator")
 
 text = st.text_area("Enter your text here:", "")
 
 st.markdown(generate_color_legend(), unsafe_allow_html=True)
 
 if st.button("Tag"):
-    model = PosTaggingModel.load_from_checkpoint(os.path.join(wdir,"pos_tagging_model.ckpt"))
+    model = PosTaggingModel.load_from_checkpoint(os.path.join(wdir, "model/pos_tagging_model.ckpt"))
     html_output = predict(text, model)
     st.markdown(html_output, unsafe_allow_html=True)

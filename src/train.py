@@ -8,18 +8,21 @@ from src.model.bert import PosTaggingModel
 from src.util.helper import *
 import settings
 import argparse
+from pytorch_lightning.loggers import CSVLogger
+
 logger = logger.setup_applevel_logger(file_name = os.path.join(wdir,'logging/app_debug.log'))
 logger.info('Run Trainer for POS Tagging')
 
 def main(train_file,dev_file):
-    model = PosTaggingModel()
+    model = PosTaggingModel(train_file=train_file,
+                            dev_file=dev_file)
+    csv_logger = CSVLogger("lightning_logs", name="pos_tagging")
     trainer = pl.Trainer(max_epochs=settings.EPOCH,
                          accelerator=settings.ACCELERATOR,
-                         devices=3)
-    trainer.fit(model,
-                train_file=train_file,
-                dev_file=dev_file)
-    trainer.save_checkpoint("pos_tagging_model.ckpt")
+                         devices=3,
+                         logger=csv_logger)
+    trainer.fit(model)
+    trainer.save_checkpoint(os.path.join(wdir,"model/pos_tagging_model.ckpt"))
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

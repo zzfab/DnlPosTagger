@@ -14,9 +14,12 @@ logger.info('Run Trainer for POS Tagging')
 
 
 def main(test_file):
-    model = PosTaggingModel.load_from_checkpoint("pos_tagging_model.ckpt")
+    model = PosTaggingModel.load_from_checkpoint("../model/pos_tagging_model.ckpt")
+    test_dataloader = model.test_dataloader(test_file)
     trainer = pl.Trainer(accelerator=settings.ACCELERATOR)
-    trainer.test(model, test_file=test_file, verbose=False)
+    trainer.test(model,
+                 dataloaders=test_dataloader,
+                 verbose=False)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
