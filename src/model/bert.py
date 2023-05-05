@@ -7,14 +7,13 @@ wdir = os.path.dirname(os.getcwd())
 sys.path.append(wdir)
 print(wdir)
 # Import Custom Modules
-from db_client.datasets.gmu_dataset import PosTaggingDataset
+from db_client.datasets.gum_dataset import PosTaggingDataset
 from src.util import logger
 from torch.utils.data import DataLoader
 from src.util.helper import *
 logger = logger.get_logger(__name__)
 import torch
 from transformers import BertForTokenClassification,  BertConfig,BertTokenizerFast
-from src.util.tagger import id2tag
 
 class PosTaggingModel(pl.LightningModule):
     def __init__(self, train_file=None, dev_file=None, test_file=None, model_name="bert-base-uncased", batch_size=16, num_labels=17):

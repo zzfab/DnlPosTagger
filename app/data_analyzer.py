@@ -28,7 +28,7 @@ st.title('DNL Part of Speech Tagger')
 
 
 option = st.selectbox(
-        "Select a model to analyse",
+        "Select a set to analyse",
         ("train", "dev", "test"),
         label_visibility=st.session_state.visibility,
         disabled=st.session_state.disabled)

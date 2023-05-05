@@ -1,8 +1,5 @@
-from dataclasses import dataclass
-
 import torch
 from torch.utils.data import Dataset
-from transformers import  BertTokenizer
 import os
 
 
@@ -14,7 +11,6 @@ sys.path.append(wdir)
 
 from src.util import logger
 from src.util import tagger
-from src.util.helper import cut_to_max_length,cut_and_convert_to_id
 logger = logger.get_logger(__name__)
 
 
