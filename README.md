@@ -47,7 +47,7 @@ To train the model, run:
 cd src/
 python train.py --train_file [train_file] --dev_file [dev_file] 
 ``` 
-where train_file is the path to the training data and dev_file is the path to the development data. The trained model will be saved to disk as model.pickle.
+where train_file is the path to the training data and dev_file is the path to the development data.
 
 To test the accuracy of the model, run:
 ``` 
