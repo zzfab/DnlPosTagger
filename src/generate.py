@@ -33,7 +33,7 @@ def predict(text, model):
 def main(test_file):
     model = PosTaggingModel.load_from_checkpoint(os.path.join(wdir,"model/pos_tagging_model.ckpt"),test_file=test_file)
     with open(args.text_file, "r") as f:
-        text = f.read()
+        text = f.readlines()
     sentences = text.split("\n")
     html_outputs = predict(sentences, model)
     for html_output in html_outputs:
