@@ -41,18 +41,21 @@ streamlit run data_analyzer.py
 ## Usage:
 To train the model, run: 
 ``` 
+cd src/
 python train.py --train_file [train_file] --dev_file [dev_file] 
 ``` 
 where train_file is the path to the training data and dev_file is the path to the development data. The trained model will be saved to disk as model.pickle.
 
 To test the accuracy of the model, run:
 ``` 
+cd src/
 python eval.py --test_file [test_file]
 ``` 
 where test_file is the path to the test data.
 
 To generate POS tags for unlabelled text, 
 ```
+cd src/
 run python generate.py --text_file [text_file]
 ```
 where text_file is the path to the unlabelled text.

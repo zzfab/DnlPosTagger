@@ -36,7 +36,7 @@ class PosTaggingModel(pl.LightningModule):
         self.dev_file = dev_file
         self.test_file = test_file
 
-        self.test_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_labels+1)
+        self.test_acc = torchmetrics.Accuracy(task="multiclass", num_classes=num_labels)
 
     def forward(self, input_ids, attention_mask, labels=None, token_type_ids=None):
         return self.model(input_ids=input_ids, attention_mask=attention_mask, labels=labels)
