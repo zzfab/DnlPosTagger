@@ -32,22 +32,15 @@ def predict(text, model):
 
 def main(test_file):
     model = PosTaggingModel.load_from_checkpoint(os.path.join(wdir,"model/pos_tagging_model.ckpt"),test_file=test_file)
-    print(predict(text, model))
+    with open(args.text_file, "r") as f:
+        text = f.read()
+    sentences = text.split("\n")
+    html_outputs = predict(sentences, model)
+    for html_output in html_outputs:
+        print(html_output)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument("text_file", type=str, nargs="?", help="Path to the text file")
     args = parser.parse_args()
     main(args.text_file)
-
-
-st.title("POS Tagger")
-
-text = st.text_area("Enter your text here:", "")
-
-st.markdown(generate_color_legend(), unsafe_allow_html=True)
-
-if st.button("Tag"):
-    model = PosTaggingModel.load_from_checkpoint(os.path.join(wdir,"pos_tagging_model.ckpt"))
-    html_output = predict(text, model)
-    st.markdown(html_output, unsafe_allow_html=True)
