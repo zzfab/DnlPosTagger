@@ -1,8 +1,9 @@
 # POS Tagger
 This repository contains a Part-of-Speech (POS) tagger implemented using the BERTForTokenClassification model from the Hugging Face Transformers library.
 
-Code was written in Python 3.8.16
-Be aware of change `settings.py` if computation is made on cpu/gpu
+Code was written in Python `3.8.16`.
+
+Feel free to adjust `settings.py` if necessary.
 ## Assumptions
 - The input data is in CoNLL-U format.
 - The dataset has 17 distinct POS tags.
