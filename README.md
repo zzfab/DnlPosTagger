@@ -18,10 +18,12 @@ The testing strategy involves splitting the dataset into training, validation, a
 The degree of confidence in the model can be determined by comparing its performance on the validation and test sets. If the model performs well on both sets, it indicates that it generalizes well to unseen data. However, the model's confidence can be further improved by conducting a more thorough evaluation, such as using cross-validation or testing on a diverse set of datasets.
 
 ## Trade-offs
-- BERT models are computationally expensive and may require more resources (e.g., memory and computation time) compared to LSTM or HMM models. If you have limited resources, you may want to consider simpler models like LSTMs or HMMs.
+- BERT models are computationally expensive and may require more resources (e.g., memory and computation time) compared to LSTM or HMM models.
 - Using a pre-trained BERT model like bert-base-uncased may not be optimal for certain languages or specific domains. Fine-tuning a domain-specific pre-trained model or training a model from scratch could be beneficial in such cases.
 - HMMs are more interpretable than BERT or LSTM models, which might be an advantage in some applications where model interpretability is crucial.
 - No testing/hyperparametertuning/early stopping or regularization was made because of time
+- No baseline comparison
+- Evaluation was only made on token Level
 ## Time Spent on Challenge
 (BERT) approach took around ~ 7h in total.
 
